@@ -33,6 +33,7 @@ exports.getOneSauce = (req, res, next) => {
   );
 };
 
+
 exports.modifySauce = (req, res, next) => {
   const sauceObject = req.file ? {
     ...JSON.parse(req.body.sauce),
@@ -59,28 +60,38 @@ exports.likeOrDislikeSauce = (req, res, next) => {
       _id: req.params.id
     })
     .then(
-      (sauce) => {        
-        if (req.body.like === 1) {          
-          sauce.likes =+ 1
-          console.log("likes",sauce.likes)
-        }        
+      (sauce) => {
+
+        if (req.body.like === 1) {
+          sauce.likes += 1
+          sauce.usersLiked.push(req.body.userId)
+        }
         if (req.body.like === -1) {
-          sauce.dislikes =+ 1
-          console.log("dislikes",sauce.dislikes)
-        } 
+          sauce.dislikes += 1
+          sauce.usersDisliked.push(req.body.userId)
+        }
+        if (req.body.like === 0 && sauce.usersLiked.find(e => e == req.body.userId)) {
+          sauce.likes -= 1
+          sauce.usersLiked.splice(sauce.usersLiked.findIndex(e => e = req.body.userId), 1)
+        }
+        if (req.body.like === 0 && sauce.usersDisliked.find(e => e == req.body.userId)) {
+          sauce.dislikes -= 1
+          sauce.usersDisliked.splice(sauce.usersDisliked.findIndex(e => e = req.body.userId), 1)
+        }
         sauce.save()
-        .then(() => res.status(201).json({
-          message: 'Likes / Dislikes enregistrée !'
-        }))
-        .catch(error => res.status(400).json({
-          error
-        }));       
-      }     
+          .then(() => res.status(201).json({
+            message: 'Likes / Dislikes enregistrée !'
+          }))
+          .catch(error => res.status(400).json({
+            error
+          }));
+      }
     )
     .catch(error => res.status(400).json({
       error
     }))
 }
+
 
 exports.deleteSauce = (req, res, next) => {
   Sauce.findOne({
